@@ -39,7 +39,6 @@ public class AccountController {
 					.birthDate(birthDate)
 					.username(createUserDTO.getUsername())
 					.password(passwordEncoder.encode(createUserDTO.getPassword()))
-					.image(createUserDTO.getImage())
 					.build();
 
 			// Guardar el usuario en la base de datos
