@@ -1,10 +1,12 @@
 package com.api.ahsoka.security;
 
+import com.api.ahsoka.security.filters.JWTAuthorizationFilter;
 import com.api.ahsoka.security.filters.JwtAuthenticationFilter;
 import com.api.ahsoka.security.jwt.JwtUtils;
 import com.api.ahsoka.services.UserDetailServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -14,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
@@ -24,6 +27,9 @@ public class SecurityConfig {
 
     @Autowired
     UserDetailServiceImpl userDetailService;
+
+    @Autowired
+    JWTAuthorizationFilter authorizationFilter;
 
     @Bean
     SecurityFilterChain securityFilterChain (HttpSecurity httpSecurity, AuthenticationManager authenticationManager) throws Exception{
@@ -42,6 +48,7 @@ public class SecurityConfig {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
                 })
                 .addFilter(jwtAuthenticationFilter)
+                .addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

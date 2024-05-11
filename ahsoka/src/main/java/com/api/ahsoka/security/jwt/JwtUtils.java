@@ -45,7 +45,7 @@ public class JwtUtils {
     }
 
     //Obtener el username del token
-    public String getNombreUsuarioToken(String token) {
+    public String getUsernameToken(String token) {
         return getClaim(token, Claims::getSubject);
     }
 
