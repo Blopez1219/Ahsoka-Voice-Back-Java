@@ -7,6 +7,10 @@ import com.api.ahsoka.request.UpdateUsernameDTO;
 import com.api.ahsoka.services.UserDetailServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -89,6 +93,34 @@ public class UserController {
             return ResponseEntity.ok("Imagen subida exitosamente");
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Error al subir la imagen: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/getImage/{id}")
+    public ResponseEntity<?> getImage(@PathVariable Long id) {
+        Optional<UserEntity> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+        }
+
+        UserEntity user = userOptional.get();
+        String imagePath = user.getImage();
+        if (imagePath == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Imagen no encontrada");
+        }
+
+        try {
+            Path filePath = Paths.get(imagePath);
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Imagen no encontrada o no es legible");
+            }
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener la imagen: " + e.getMessage());
         }
     }
 }
