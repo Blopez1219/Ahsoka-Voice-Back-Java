@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 @Service
 public class UserDetailServiceImpl implements UserDetailsService {
@@ -24,5 +25,16 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
 
         return new User(userEntity.getUsername(), userEntity.getPassword(), true, true, true, true, Collections.emptyList() );
+    }
+
+    public UserEntity updateUsername(Long id, String newUsername) {
+        Optional<UserEntity> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            UserEntity user = userOptional.get();
+            user.setUsername(newUsername);
+            return userRepository.save(user);
+        } else {
+            throw new RuntimeException("User not found with id " + id);
+        }
     }
 }
