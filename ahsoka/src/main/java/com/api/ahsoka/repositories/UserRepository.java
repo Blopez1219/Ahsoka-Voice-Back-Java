@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.api.ahsoka.models.UserEntity;
 
 @Repository
-public interface UserRepository extends CrudRepository<UserEntity, Integer>{
+public interface UserRepository extends CrudRepository<UserEntity, Long>{
 	
 	Optional<UserEntity> findByUsername(String username);
 
