@@ -3,6 +3,7 @@ package com.api.ahsoka.controllers;
 import com.api.ahsoka.models.UserEntity;
 import com.api.ahsoka.repositories.UserRepository;
 import com.api.ahsoka.request.UpdatePasswordDTO;
+import com.api.ahsoka.request.UpdateUsernameDTO;
 import com.api.ahsoka.services.UserDetailServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +30,9 @@ public class UserController {
         return "Hello, your token is valid!";
     }
 
-    @PutMapping("/updateUsername/{id}")
-    public UserEntity updateUsername(@PathVariable Long id, @RequestParam String newUsername) {
-        return userDetailService.updateUsername(id, newUsername);
+    @PutMapping("/updateUsername")
+    public UserEntity updateUsername(@Valid @RequestBody UpdateUsernameDTO updateUsernameDTO) {
+        return userDetailService.updateUsername(updateUsernameDTO.getUserId(), updateUsernameDTO.getNewUsername());
     }
 
     @PutMapping("/updatePassword")
