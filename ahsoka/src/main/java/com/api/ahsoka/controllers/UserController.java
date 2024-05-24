@@ -4,6 +4,7 @@ import com.api.ahsoka.models.UserEntity;
 import com.api.ahsoka.repositories.UserRepository;
 import com.api.ahsoka.request.UpdatePasswordDTO;
 import com.api.ahsoka.request.UpdateUsernameDTO;
+import com.api.ahsoka.response.ApiResponse;
 import com.api.ahsoka.services.UserDetailServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,8 +47,13 @@ public class UserController {
     }
 
     @PutMapping("/updateUsername")
-    public UserEntity updateUsername(@Valid @RequestBody UpdateUsernameDTO updateUsernameDTO) {
-        return userDetailService.updateUsername(updateUsernameDTO.getUserId(), updateUsernameDTO.getNewUsername());
+    public ResponseEntity<ApiResponse> updateUsername(@Valid @RequestBody UpdateUsernameDTO updateUsernameDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        userDetailService.updateUsername(currentUsername, updateUsernameDTO.getNewUsername());
+
+        ApiResponse response = new ApiResponse(HttpStatus.OK.value(), "Nombre de usuario actualizado correctamente");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PutMapping("/updatePassword")

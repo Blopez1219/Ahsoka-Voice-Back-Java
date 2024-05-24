@@ -27,14 +27,18 @@ public class UserDetailServiceImpl implements UserDetailsService {
         return new User(userEntity.getUsername(), userEntity.getPassword(), true, true, true, true, Collections.emptyList() );
     }
 
-    public UserEntity updateUsername(Long id, String newUsername) {
-        Optional<UserEntity> userOptional = userRepository.findById(id);
-        if (userOptional.isPresent()) {
-            UserEntity user = userOptional.get();
-            user.setUsername(newUsername);
-            return userRepository.save(user);
-        } else {
-            throw new RuntimeException("User not found with id " + id);
+    public UserEntity updateUsername(String currentUsername, String newUsername) {
+        // Lógica para actualizar el nombre de usuario
+        Optional<UserEntity> user = userRepository.findByUsername(currentUsername);
+        if (user.isPresent()) {
+            UserEntity userEntity = user.get();
+            userEntity.setUsername(newUsername);
+            userRepository.save(userEntity);
+            return userEntity;
+        }else{
+            throw new UsernameNotFoundException("El usuario "+currentUsername+" no existe");
         }
     }
+
+    
 }
