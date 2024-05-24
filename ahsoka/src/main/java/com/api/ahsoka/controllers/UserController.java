@@ -1,11 +1,13 @@
 package com.api.ahsoka.controllers;
 
+import com.api.ahsoka.exceptions.Exceptions;
 import com.api.ahsoka.models.UserEntity;
 import com.api.ahsoka.repositories.UserRepository;
 import com.api.ahsoka.request.UpdatePasswordDTO;
 import com.api.ahsoka.request.UpdateUsernameDTO;
 import com.api.ahsoka.response.ApiResponse;
 import com.api.ahsoka.services.UserDetailServiceImpl;
+import com.api.ahsoka.services.UserServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -31,7 +33,7 @@ import java.util.Optional;
 @RequestMapping("/api/users")
 public class UserController {
     @Autowired
-    private UserDetailServiceImpl userDetailService;
+    private UserServiceImpl userService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -50,7 +52,7 @@ public class UserController {
     public ResponseEntity<ApiResponse> updateUsername(@Valid @RequestBody UpdateUsernameDTO updateUsernameDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-        userDetailService.updateUsername(currentUsername, updateUsernameDTO.getNewUsername());
+        userService.updateUsername(currentUsername, updateUsernameDTO.getNewUsername());
 
         ApiResponse response = new ApiResponse(HttpStatus.OK.value(), "Nombre de usuario actualizado correctamente");
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -58,18 +60,20 @@ public class UserController {
 
     @PutMapping("/updatePassword")
     public ResponseEntity<?> updatePassword(@Valid @RequestBody UpdatePasswordDTO updatePasswordDTO) {
-        Optional<UserEntity> userOptional = userRepository.findById(updatePasswordDTO.getUserId());
-        if (userOptional.isPresent()) {
-            UserEntity user = userOptional.get();
-            if (passwordEncoder.matches(updatePasswordDTO.getCurrentPassword(), user.getPassword())) {
-                user.setPassword(passwordEncoder.encode(updatePasswordDTO.getNewPassword()));
-                userRepository.save(user);
-                return ResponseEntity.ok("Contraseña actualizada exitosamente");
-            } else {
-                return ResponseEntity.badRequest().body("La contraseña actual es incorrecta");
-            }
-        } else {
-            return ResponseEntity.badRequest().body("Usuario no encontrado");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        try {
+            userService.updatePassword(currentUsername, updatePasswordDTO.getCurrentPassword(), updatePasswordDTO.getNewPassword());
+            ApiResponse response = new ApiResponse(HttpStatus.OK.value(), "Contraseña actualizada correctamente");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            // Manejar la excepción de contraseña incorrecta
+            ApiResponse response = new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (Exceptions.UsernameNotFoundException e) {
+            // Manejar la excepción de usuario no encontrado
+            ApiResponse response = new ApiResponse(HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
 

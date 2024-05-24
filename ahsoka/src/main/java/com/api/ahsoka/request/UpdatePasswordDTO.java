@@ -11,9 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdatePasswordDTO {
 
-    @NotNull
-    private Long userId;
-
     @NotBlank
     private String currentPassword;
 

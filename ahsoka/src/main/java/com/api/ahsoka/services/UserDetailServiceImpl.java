@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -19,26 +20,13 @@ public class UserDetailServiceImpl implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
 
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("El usuario "+username+" no existe"));
 
-
         return new User(userEntity.getUsername(), userEntity.getPassword(), true, true, true, true, Collections.emptyList() );
     }
 
-    public UserEntity updateUsername(String currentUsername, String newUsername) {
-        // Lógica para actualizar el nombre de usuario
-        Optional<UserEntity> user = userRepository.findByUsername(currentUsername);
-        if (user.isPresent()) {
-            UserEntity userEntity = user.get();
-            userEntity.setUsername(newUsername);
-            userRepository.save(userEntity);
-            return userEntity;
-        }else{
-            throw new UsernameNotFoundException("El usuario "+currentUsername+" no existe");
-        }
-    }
 
-    
 }
