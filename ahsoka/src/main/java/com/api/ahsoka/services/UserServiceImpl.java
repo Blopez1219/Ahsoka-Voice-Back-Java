@@ -1,5 +1,6 @@
 package com.api.ahsoka.services;
 
+import com.api.ahsoka.exceptions.Exceptions;
 import com.api.ahsoka.interfaces.UserService;
 import com.api.ahsoka.models.UserEntity;
 import com.api.ahsoka.repositories.UserRepository;
@@ -22,6 +23,12 @@ public class UserServiceImpl implements UserService {
     private PasswordEncoder passwordEncoder;
 
     public UserEntity updateUsername(String currentUsername, String newUsername) {
+        // Verificar si el nuevo nombre de usuario ya existe
+        Optional<UserEntity> existingUser = userRepository.findByUsername(newUsername);
+        if (existingUser.isPresent()) {
+            throw new Exceptions.UsernameAlreadyExistsException("El usuario " + newUsername + " ya existe");
+        }
+
         // Lógica para actualizar el nombre de usuario
         Optional<UserEntity> user = userRepository.findByUsername(currentUsername);
         if (user.isPresent()) {
@@ -29,8 +36,8 @@ public class UserServiceImpl implements UserService {
             userEntity.setUsername(newUsername);
             userRepository.save(userEntity);
             return userEntity;
-        }else{
-            throw new UsernameNotFoundException("El usuario "+currentUsername+" no existe");
+        } else {
+            throw new UsernameNotFoundException("El usuario " + currentUsername + " no existe");
         }
     }
 

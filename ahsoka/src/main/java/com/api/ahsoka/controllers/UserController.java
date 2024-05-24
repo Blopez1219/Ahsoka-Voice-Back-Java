@@ -52,10 +52,17 @@ public class UserController {
     public ResponseEntity<ApiResponse> updateUsername(@Valid @RequestBody UpdateUsernameDTO updateUsernameDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-        userService.updateUsername(currentUsername, updateUsernameDTO.getNewUsername());
-
-        ApiResponse response = new ApiResponse(HttpStatus.OK.value(), "Nombre de usuario actualizado correctamente");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        try {
+            userService.updateUsername(currentUsername, updateUsernameDTO.getNewUsername());
+            ApiResponse response = new ApiResponse(HttpStatus.OK.value(), "Nombre de usuario actualizado correctamente");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exceptions.UsernameAlreadyExistsException e) {
+            ApiResponse response = new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (Exceptions.UsernameNotFoundException e) {
+            ApiResponse response = new ApiResponse(HttpStatus.NOT_FOUND.value(), e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
     @PutMapping("/updatePassword")
@@ -67,11 +74,9 @@ public class UserController {
             ApiResponse response = new ApiResponse(HttpStatus.OK.value(), "Contraseña actualizada correctamente");
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            // Manejar la excepción de contraseña incorrecta
             ApiResponse response = new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         } catch (Exceptions.UsernameNotFoundException e) {
-            // Manejar la excepción de usuario no encontrado
             ApiResponse response = new ApiResponse(HttpStatus.NOT_FOUND.value(), e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
@@ -81,7 +86,8 @@ public class UserController {
     public ResponseEntity<?> uploadImage(@PathVariable Long id, @RequestParam("image") MultipartFile file) {
         Optional<UserEntity> userOptional = userRepository.findById(id);
         if (!userOptional.isPresent()) {
-            return ResponseEntity.badRequest().body("Usuario no encontrado");
+            ApiResponse response = new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Usuario no encontrado");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         UserEntity user = userOptional.get();
@@ -101,10 +107,11 @@ public class UserController {
             // Actualizar la ruta de la imagen en el usuario
             user.setImage(filePath.toString());
             userRepository.save(user);
-
-            return ResponseEntity.ok("Imagen subida exitosamente");
+            ApiResponse response = new ApiResponse(HttpStatus.OK.value(), "Imagen subida exitosamente");
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (IOException e) {
-            return ResponseEntity.status(500).body("Error al subir la imagen: " + e.getMessage());
+            ApiResponse response = new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error al subir la imagen: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -112,27 +119,31 @@ public class UserController {
     public ResponseEntity<?> getImage(@PathVariable Long id) {
         Optional<UserEntity> userOptional = userRepository.findById(id);
         if (userOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+            ApiResponse response = new ApiResponse(HttpStatus.NOT_FOUND.value(), "Usuario no encontrado");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
         UserEntity user = userOptional.get();
         String imagePath = user.getImage();
         if (imagePath == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Imagen no encontrada");
+            ApiResponse response = new ApiResponse(HttpStatus.NOT_FOUND.value(), "Imagen no encontrada");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
         try {
             Path filePath = Paths.get(imagePath);
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Imagen no encontrada o no es legible");
+                ApiResponse response = new ApiResponse(HttpStatus.NOT_FOUND.value(), "Imagen no encontrada o no es legible");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                     .body(resource);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener la imagen: " + e.getMessage());
+            ApiResponse response = new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error al obtener la imagen: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
