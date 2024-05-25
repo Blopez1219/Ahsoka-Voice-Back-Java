@@ -11,9 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateUsernameDTO {
 
-    @NotNull
-    private Long userId;
-
     @NotBlank
     private String newUsername;
 }

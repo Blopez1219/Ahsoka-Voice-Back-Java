@@ -2,8 +2,10 @@ package com.api.ahsoka.controllers;
 
 import com.api.ahsoka.models.UserEntity;
 import com.api.ahsoka.request.CreateUserDTO;
+import com.api.ahsoka.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +33,18 @@ public class AccountController {
 			birthDate = LocalDate.parse(birthDateString, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 		} catch (DateTimeParseException e) {
 			// Devolver una respuesta de error si el formato de la fecha de nacimiento es incorrecto
-			return ResponseEntity.badRequest().body("Formato de fecha de nacimiento inválido. Debe estar en formato dd/MM/yyyy.");
+			ApiResponse response = new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Formato de fecha de nacimiento inválido. Debe estar en formato dd/MM/yyyy.");
+			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+		}
+		if (userRepository.findByEmail(createUserDTO.getEmail()).isPresent()) {
+			ApiResponse response = new ApiResponse(HttpStatus.BAD_REQUEST.value(), "El correo electrónico ya está registrado.");
+			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+		}
+
+		// Verificar si el nombre de usuario ya existe
+		if (userRepository.findByUsername(createUserDTO.getUsername()).isPresent()) {
+			ApiResponse response = new ApiResponse(HttpStatus.BAD_REQUEST.value(), "El nombre de usuario ya está registrado.");
+			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 		}
 		if(birthDate != null){
 			UserEntity userEntity = UserEntity.builder()
@@ -45,7 +58,8 @@ public class AccountController {
 			userRepository.save(userEntity);
 
 			// Puedes devolver un ResponseEntity con un mensaje de éxito
-			return ResponseEntity.ok("Usuario creado exitosamente");
+			ApiResponse response = new ApiResponse(HttpStatus.OK.value(), "Usuario creado exitosamente");
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 		return null;
 
