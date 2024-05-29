@@ -70,4 +70,18 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         super.successfulAuthentication(request, response, chain, authResult);
     }
+
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        Map<String, Object> httpResponse = new HashMap<>();
+        httpResponse.put("Message", "Autenticación fallida: " + failed.getMessage());
+
+        response.getWriter().write(new ObjectMapper().writeValueAsString(httpResponse));
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.getWriter().flush();
+    }
 }
